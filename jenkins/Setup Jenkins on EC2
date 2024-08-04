@@ -1,0 +1,28 @@
+* Create an EC2 instance, enable port 8080 in security group and provide the following commands in the EC2 userdata:
+
+#!/bin/bash
+sudo yum update -y
+sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+sudo yum upgrade
+sudo dnf install java-17-amazon-corretto -y
+sudo yum install jenkins -y
+sudo yum install git maven -y
+sudo systemctl enable jenkins
+sudo systemctl start jenkins
+sudo systemctl status jenkins
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+
+* setup jenkins using the http://ec2 ip:8080
+
+Setup Slave node
+
+* create ec2 instance, open port 22 and install the following comand via the EC2 user data:
+
+
+
+#!/bin/bash
+sudo yum upgrade
+sudo dnf install java-17-amazon-corretto -y
+sudo yum install git maven wget -y
+
