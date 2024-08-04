@@ -11,18 +11,72 @@ sudo yum install git maven -y
 sudo systemctl enable jenkins
 sudo systemctl start jenkins
 sudo systemctl status jenkins
+
+* setup jenkins using the http://<ec2-ip>:8080
+
+* To get the password, connect to the master node and 
 sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 
-* setup jenkins using the http://ec2 ip:8080
+* install the recommended plugin
 
-Setup Slave node
+# To connect to the slave node,generate a ssh key; dont use sudo with this command
+ssh-keygen -t rsa -b 2048 -m PEM -f ~/.ssh/jenkins_slave_key
+<press enter enter 4 times>
+
+
+# get the private ssh key for master slave setup
+cat ~/.ssh/jenkins_slave_key
+
+# Add SSH Credentials in Jenkins
+Go to Manage Jenkins > Manage Credentials.
+Select System  and then the appropriate domain (e.g., (global)).
+Click on Add Credentials.
+Choose SSH Username with private key.
+Enter ec2-user (or the appropriate username) as the username.
+Select Enter directly and paste the content of the private key (~/.ssh/jenkins_slave_key).
+Optionally, provide an ID and description.
+
+
+### Setup Slave node
 
 * create ec2 instance, open port 22 and install the following comand via the EC2 user data:
-
-
 
 #!/bin/bash
 sudo yum upgrade
 sudo dnf install java-17-amazon-corretto -y
 sudo yum install git maven wget -y
+mkdir -p ~/.ssh
+chmod 600 ~/.ssh/authorized_keys
+chmod 700 ~/.ssh
 
+
+# copy the public key from the master node and paste the same into the slave node
+cat ~/.ssh/jenkins_slave_key.pub
+
+vi authorized_keys 
+<paste the copied public key into this file and save the file>
+
+
+### on Master node
+# go to the master node and see if you can ssh to the slave node now without the password
+ssh -i ~/.ssh/jenkins_slave_key ec2-user@<slave-ip-address>
+
+# if successfully connected, then enter "exit" command to exit from the shell.
+exit
+
+###Create and Configure Slave Node in Jenkins
+Navigate to Manage Jenkins > Nodes > New Node.
+Enter a name for the node (e.g., slave1).
+Select Permanent Agent and click OK.
+Configure the node with the following settings:
+Remote root directory: /home/ec2-user/jenkins (or a directory where Jenkins should store files on the slave)
+Labels: Any labels you want to assign to the node (e.g., linux)
+Launch method: Launch agents via SSH
+Host: <slave-ip> (the IP address of the slave node)
+Credentials: Select the SSH credentials you added earlier
+Host Key Verification Strategy: Select Manually trusted key Verification Strategy and check the option Trust the initial connection.
+
+Check  "Disk Space Monitoring Thresholds"
+In all the thresholds boxes, enter 100MiB
+
+Save
